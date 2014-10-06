@@ -1,14 +1,21 @@
 <?php
 
 /**
+ * Class Smart_Mail_Reminder
  * Created by PhpStorm.
  * User: jimtrim
  * Date: 06/10/14
  * Time: 08:41
  */
 class Smart_Mail_Reminder {
+	/**
+	 * @var Smart_Mail_Reminder
+	 */
 	private static $instance = null;
 
+	/**
+	 * @return Smart_Mail_Reminder
+	 */
 	public static function get_instance() {
 		if ( !isset( self::$instance ) ) {
 			self::$instance = new self;
@@ -17,6 +24,10 @@ class Smart_Mail_Reminder {
 		return self::$instance;
 	}
 
+	/**
+	 * Constructor for Smart_Mail_Reminder
+	 * @return Smart_Mail_Reminder
+	 */
 	private function __construct() {
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
@@ -26,31 +37,61 @@ class Smart_Mail_Reminder {
 
 	/* Initialization */
 
+	/**
+	 * Activation hook
+	 *
+	 * @return void
+	 */
 	public static function activate() {
 		wp_schedule_event( '1388574000', 'daily', 'Smart_Mail_Reminder::cron_daily' ); // 1.jan 2014 12:00
 	}
 
+	/**
+	 * Deactivation hook
+	 *
+	 * @return void
+	 */
 	public static function deactivate() {
 		wp_unschedule_event( '1388574000', 'Smart_Mail_Reminder::cron_daily' ); // 1.jan 2014 12:00
 	}
 
+	/**
+	 * Uninstall hook
+	 *
+	 * @return void
+	 */
 	public static function uninstall() {
 		if ( __FILE__ != WP_UNINSTALL_PLUGIN ) {
 			return;
 		}
 	}
 
+	/**
+	 * Initialize admin options
+	 *
+	 * @return void
+	 */
 	public function admin_init() {
 
 		register_setting( 'reminder-settings-group', 'reminder_admin_receive_bool' );
 		register_setting( 'reminder-settings-group', 'reminder_admin_email' );
 	}
 
+	/**
+	 * Initialize admin menu item
+	 *
+	 * @return void
+	 */
 	public function admin_menu() {
 		add_options_page( __( 'Smart Mail Reminder' ), __( 'Smart Mail Reminder' ), 'manage_options',
 			'smart-mail-reminder', array( $this, 'view_options' ) );
 	}
 
+	/**
+	 * Register used Advanced Custom Fields
+	 *
+	 * @return void
+	 */
 	public function register_acf_fields() {
 		if ( function_exists( "register_field_group" ) ) {
 			$users = array();
@@ -144,6 +185,11 @@ class Smart_Mail_Reminder {
 	}
 
 	/* Views */
+	/**
+	 * Generate view for option page, and echos it
+	 *
+	 * @return void
+	 */
 	public function view_options() {
 		?>
 		<div class="wrap">
@@ -183,10 +229,23 @@ class Smart_Mail_Reminder {
 	}
 
 	/* Controller */
+	/**
+	 * Set mail_sent meta to 0 for WP_Post
+	 *
+	 * @param int $post_id
+	 * @return void
+	 */
 	public function reset_mail_sent_meta( $post_id ) {
 		self::set_mail_sent_meta( $post_id, 0 );
 	}
 
+	/**
+	 * Set mail_sent meta to $value for WP_Post
+	 *
+	 * @param int $post_id
+	 * @param int $value
+	 * @return void
+	 */
 	private static function set_mail_sent_meta( $post_id, $value = 0 ) {
 		if ( wp_is_post_revision( $post_id ) ) {
 			return;
@@ -199,6 +258,11 @@ class Smart_Mail_Reminder {
 		}
 	}
 
+	/**
+	 * Cron routine to be run daily at 10:00 am
+	 *
+	 * @return void
+	 */
 	public static function cron_daily() {
 		$query_args = array(
 			'post_type'        => 'post',
@@ -246,6 +310,13 @@ class Smart_Mail_Reminder {
 
 	}
 
+	/**
+	 * Remove duplicate entries in an array
+	 *
+	 * @param array $arr1
+	 *
+	 * @return array
+	 */
 	private function remove_duplicates( $arr1 ) {
 		$arr2 = array();
 		foreach ( $arr1 as $item ) {
