@@ -169,18 +169,38 @@ class Smart_Mail_Reminder {
 		foreach ( $posts as $post ) {
 			/* @var $post WP_Post */
 
-			//var_dump(date("Ymd"));
-			//var_dump(get_post_meta($post->ID, 'reminder_date') );
-
-			if (get_post_meta($post->ID, 'reminder_date') && get_post_meta($post->ID, 'reminder_date')[0] === date("Ymd")) {
+			$recipients = array();
+			$meta = get_post_meta($post->ID);
+			$reminder_date = $meta['reminder_date'][0];
+			if ($reminder_date && $reminder_date === date("Ymd")) {
 				$subject = "[" . get_option("blogname") . "] " . __("Automatisk varsel");
-				$message = get_post_meta($post->ID, "reminder_text")[0];
+				$message = $meta["reminder_text"][0];
 				$footer = __("Artikkel: ") . get_permalink($post->ID);
+
+
+				foreach ( get_post_meta( $post->ID, "reminder_recipients" )[0] as $recipient ) {
+					if ($recipient === "author") {
+						$recipients[] = get_the_author_meta('user_email', $post->post_author);
+					}
+					if ($recipient === "editor") {
+						//TODO: add editor recipient(s)
+					}
+					if ($recipient === "admin") {
+						//TODO: add admin recipient(s)
+					}
+				}
+
+				for ($i = 0; $i < intval(get_post_meta($post->ID, "reminder_extra_recipients")[0], 10) ; $i++) {
+					$recipients[] = get_post_meta($post->ID, "reminder_extra_recipients_" . $i . "_user")[0];
+				}
+//				var_dump($recipients);
+
 				echo $subject;
 				echo $message;
 				echo $footer;
 
 			}
+			var_dump($recipients);
 		}
 
 	}
