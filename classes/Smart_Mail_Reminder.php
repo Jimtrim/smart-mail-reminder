@@ -21,17 +21,17 @@ class Smart_Mail_Reminder {
 	private function __construct() {
 		add_action( 'admin_init' , array($this, 'admin_init'));
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
+		add_action( 'init', array($this, 'register_acf_fields'));
 	}
 
 	/* Initialization */
 
 	public static function activate() {
-		wp_schedule_event(current_time('timestamp'), 'hourly', 'Smart_Mail_Reminder::cron_send');
-		self::register_acf_fields();
+		wp_schedule_event( '1388574000' , 'daily', 'Smart_Mail_Reminder::cron_daily'); // 1.jan 2014 12:00
 	}
 
 	public static function deactivate() {
-		wp_unschedule_event(current_time('timestamp'), 'Smart_Mail_Reminder::cron_send');
+		wp_unschedule_event( '1388574000', 'Smart_Mail_Reminder::cron_daily'); // 1.jan 2014 12:00
 	}
 
 	public static function uninstall() {
@@ -47,16 +47,21 @@ class Smart_Mail_Reminder {
 			'smart-mail-reminder', array( $this, 'view_options') );
 	}
 
-	private static function register_acf_fields() {
+	public function register_acf_fields() {
 		if(function_exists("register_field_group"))
 		{
+			$users = array();
+			foreach ( get_users() as $user ) {
+				/* @var $user WP_User */
+				$users[ $user->get("user_email") ] = $user->get("user_nicename");
+			}
 			register_field_group(array (
 				'id' => 'acf_reminder-to-authors',
-				'title' => __('Reminder to author(s)'),
+				'title' => 'Reminder to author(s)',
 				'fields' => array (
 					array (
 						'key' => 'field_542e86f726296',
-						'label' => __('Påminnelsedato'),
+						'label' => 'Påminnelsedato',
 						'name' => 'reminder_date',
 						'type' => 'date_picker',
 						'required' => 1,
@@ -66,7 +71,7 @@ class Smart_Mail_Reminder {
 					),
 					array (
 						'key' => 'field_542e872f26297',
-						'label' => __('Påminnelsetekst'),
+						'label' => 'Påminnelsetekst',
 						'name' => 'reminder_text',
 						'type' => 'textarea',
 						'required' => 1,
@@ -78,7 +83,7 @@ class Smart_Mail_Reminder {
 					),
 					array (
 						'key' => 'field_542e88cd26298',
-						'label' => __('Mottaker(e)'),
+						'label' => 'Mottaker(e)',
 						'name' => 'reminder_recipients',
 						'type' => 'checkbox',
 						'required' => 1,
@@ -89,6 +94,32 @@ class Smart_Mail_Reminder {
 						),
 						'default_value' => '',
 						'layout' => 'vertical',
+					),
+					array (
+						'key' => 'field_54326012e38b1',
+						'label' => 'Flere mottakere',
+						'name' => 'reminder_extra_recipients',
+						'type' => 'repeater',
+						'instructions' => __('Legg til flere brukere som skal få påminnelse'),
+						'required' => 0,
+						'sub_fields' => array (
+							array (
+								'key' => 'field_54326031e38b2',
+								'label' => 'Mottakere',
+								'name' => 'user',
+								'type' => 'select',
+								'required' => 1,
+								'column_width' => '',
+								'choices' => $users,
+								'default_value' => '',
+								'allow_null' => 0,
+								'multiple' => 0,
+							),
+						),
+						'row_min' => 0,
+						'row_limit' => '',
+						'layout' => 'table',
+						'button_label' => 'Legg til bruker',
 					),
 				),
 				'location' => array (
@@ -111,15 +142,46 @@ class Smart_Mail_Reminder {
 				'menu_order' => 0,
 			));
 		}
+
 	}
 
 	/* Views */
 	public function view_options() {
 		echo "<h1>It works</h1>";
+//		$users = array();
+//		foreach ( get_users() as $user ) {
+//			/* @var $user WP_User */
+//			$users[ $user->get("user_email") ] = $user->get("user_nicename");
+//		}
+//		var_dump($users);
+
+		self::cron_daily();
 	}
 
 	/* Controller */
-	public static function cron_send() {
+	public static function cron_daily() {
+		$query_args = array(
+			'post_type'        => 'post',
+			'post_status'      => 'publish',
+			'suppress_filters' => true
+		);
+		$posts = get_posts($query_args);
+		foreach ( $posts as $post ) {
+			/* @var $post WP_Post */
+
+			//var_dump(date("Ymd"));
+			//var_dump(get_post_meta($post->ID, 'reminder_date') );
+
+			if (get_post_meta($post->ID, 'reminder_date') && get_post_meta($post->ID, 'reminder_date')[0] === date("Ymd")) {
+				$subject = "[" . get_option("blogname") . "] " . __("Automatisk varsel");
+				$message = get_post_meta($post->ID, "reminder_text")[0];
+				$footer = __("Artikkel: ") . get_permalink($post->ID);
+				echo $subject;
+				echo $message;
+				echo $footer;
+
+			}
+		}
 
 	}
 

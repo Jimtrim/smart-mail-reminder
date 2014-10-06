@@ -8,6 +8,7 @@
  * Version: 1.0
  * Text Domain: Text Domain
  * Domain Path: Domain Path
+ * Dependencies: Advanced Custom Field, ACF Repeater
  */
 
 /*
