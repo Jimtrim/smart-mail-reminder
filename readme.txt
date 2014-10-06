@@ -25,5 +25,5 @@ This software can be treated a WP plugin
 
 == Changelog ==
 
-= 0.1 =
+= 1.0 =
 * Initial Release.
