@@ -1,12 +1,11 @@
 <?php
 /**
- * Plugin Name: Name
- * Description: Description
- * Plugin URI: http://#
- * Author: Author
- * Author URI: http://#
+ * Plugin Name: Smart Mail Reminder
+ * Description: Send reminders to users about posts nearing expiration
+ * Plugin URI: http://www.smartmedia.no
+ * Author: Smart Media
+ * Author URI: http://www.smartmedia.no
  * Version: 1.0
- * License: GPL2
  * Text Domain: Text Domain
  * Domain Path: Domain Path
  */
@@ -45,10 +44,18 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-use Smartmedia\Smart_Mail_Schedule;
+//use Smartmedia\Smart_Mail_Reminder;
 
-add_action( 'plugins_loaded', array( 'Smart_Mail_Schedule', 'get_instance' ) );
-register_activation_hook( __FILE__, array( 'Smart_Mail_Schedule', 'activate' ) );
-register_deactivation_hook( __FILE__, array( 'Smart_Mail_Schedule', 'deactivate' ) );
+define( 'SMR_VERSION', '1.0' );
+define( 'SMR_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'SMR_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+
+require_once SMR_PLUGIN_DIR . 'classes/Smart_Mail_Reminder.php';
+
+$instance = Smart_Mail_Reminder::get_instance();
+
+add_action( 'plugins_loaded', array( 'Smart_Mail_Reminder', 'get_instance' ) );
+register_activation_hook( __FILE__, array( 'Smart_Mail_Reminder', 'activate' ) );
+register_deactivation_hook( __FILE__, array( 'Smart_Mail_Reminder', 'deactivate' ) );
 // register_uninstall_hook( __FILE__, array( 'Plugin_Class_Name', 'uninstall' ) );
 
