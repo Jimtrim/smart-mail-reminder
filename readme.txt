@@ -19,7 +19,7 @@ Add functionality to give a notification to people on a specific date after a po
 This software can be treated a WP plugin
 
 = Plugin =
-1. Copy the 'acf-repeater' folder into your plugins folder
+1. Copy the 'smart-mail-reminder' folder into your plugins folder
 2. Activate the plugin via the Plugins admin page
 3. Set admin email in the settings page
 
