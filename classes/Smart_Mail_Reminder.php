@@ -113,12 +113,11 @@ class Smart_Mail_Reminder {
 						'type'              => 'date_time_picker',
 						'required'          => 1,
 						'show_date'         => 'true',
-						'date_format'       => 'd/m/y',
-						'default_value'     => $today,
+						'date_format'       => 'd/m/yy',
 						'time_format'       => 'HH:mm',
 						'show_week_number'  => 'false',
 						'picker'            => 'select',
-						'save_as_timestamp' => 'true',
+						'save_as_timestamp' => 'false',
 						'get_as_timestamp'  => 'false',
 					),
 					array(
@@ -138,7 +137,7 @@ class Smart_Mail_Reminder {
 						'label'         => 'Send til skribent',
 						'name'          => 'reminder_author_bool',
 						'type'          => 'true_false',
-						'required'      => 1,
+						'required'      => 0,
 						'message'       => 'Huk av for å gi skribent påminnelse',
 						'default_value' => 1,
 					),
@@ -187,6 +186,7 @@ class Smart_Mail_Reminder {
 				),
 				'menu_order' => 0,
 			) );
+
 		}
 
 	}
@@ -320,7 +320,14 @@ class Smart_Mail_Reminder {
 
 			$subject = "[" . get_option( "blogname" ) . "] " . __( "Automatisk varsel" );
 			$message = $meta["reminder_text"][0];
-			$footer  = __( "Artikkel: " ) . get_permalink( $post->ID );
+			$footer  = __( "Dette er en automatisk varsling om innlegget: " ) . get_permalink( $post->ID ) . '.\r\n';
+			$footer .= sprintf(__('Innlegget er opprinnelig publisert %1$s og sist oppdatert %2$s')
+				, $post->post_date
+				, $post->post_modified
+			);
+
+			$message = $message . "\n" . $footer;
+
 
 
 			if ( $meta["reminder_author_bool"][0] == "1" ) {
@@ -335,7 +342,7 @@ class Smart_Mail_Reminder {
 			}
 
 			foreach ( self::remove_duplicates( $recipients ) as $recipient ) {
-				wp_mail( $recipient, $subject . $footer, $message );
+				wp_mail( $recipient, $subject, $message );
 			}
 			self::set_mail_sent_meta( $post->ID, 1 );
 		}
