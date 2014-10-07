@@ -100,6 +100,7 @@ class Smart_Mail_Reminder {
 				/* @var $user WP_User */
 				$users[$user->get( "user_email" )] = $user->get( "user_nicename" );
 			}
+			$today = current_time("d/m/y 12:00");
 //			var_dump($users);
 			register_field_group( array(
 				'id'         => 'acf_reminder-to-authors',
@@ -113,6 +114,7 @@ class Smart_Mail_Reminder {
 						'required'          => 1,
 						'show_date'         => 'true',
 						'date_format'       => 'd/m/y',
+						'default_value'     => $today,
 						'time_format'       => 'HH:mm',
 						'show_week_number'  => 'false',
 						'picker'            => 'select',
@@ -271,24 +273,35 @@ class Smart_Mail_Reminder {
 	 * @return void
 	 */
 	public static function cron_hourly() {
-		$today = strtotime( date( "Ymd" ) );
-//		var_dump( strtotime( date( "Ymd" ) ) - 3600 );
+		$today = current_time('timestamp');
+
 		$query_args = array(
 			'post_type'        => 'post',
 			'post_status'      => 'publish',
-			'meta_key'         => 'reminder_datetime',
 			'meta_query' => array(
 				array(
 					'key' => 'reminder_datetime',
-					'value' => $today - 7200, // give a two hour buffer
-					'compare' => '<='
+					'compare' => '<=',
+					'value' => $today,
+					'type' => 'numeric'
+				),
+				array(
+					'key' => 'reminder_sent',
+					'compare' => '=',
+					'value' => '0'
 				)
 			),
 			'suppress_filters' => true
 		); // Get all posts with raminderdate set to today
 
 		$posts = get_posts( $query_args );
-		var_dump($posts);
+
+		self::send_reminder_for_posts($posts);
+
+
+	}
+
+	private static function send_reminder_for_posts($posts) {
 		foreach ( $posts as $post ) {
 			/* @var $post WP_Post */
 			$meta = get_post_meta( $post->ID );
@@ -316,7 +329,6 @@ class Smart_Mail_Reminder {
 					$recipients[] = get_post_meta( $post->ID, "reminder_recipients_" . $i . "_user" )[0];
 				}
 
-//				var_dump($meta);
 				foreach ( self::remove_duplicates( $recipients ) as $recipient ) {
 					wp_mail( $recipient, $subject . $footer, $message );
 				}
