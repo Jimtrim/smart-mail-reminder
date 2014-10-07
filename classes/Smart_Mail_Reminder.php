@@ -43,7 +43,7 @@ class Smart_Mail_Reminder {
 	 * @return void
 	 */
 	public static function activate() {
-		wp_schedule_event( '1388574000', 'daily', 'Smart_Mail_Reminder::cron_daily' ); // 1.jan 2014 12:00
+		wp_schedule_event( '1388574000', 'hourly', 'Smart_Mail_Reminder::cron_hourly' ); // 1.jan 2014 12:00
 	}
 
 	/**
@@ -52,7 +52,7 @@ class Smart_Mail_Reminder {
 	 * @return void
 	 */
 	public static function deactivate() {
-		wp_unschedule_event( '1388574000', 'Smart_Mail_Reminder::cron_daily' ); // 1.jan 2014 12:00
+		wp_unschedule_event( '1388574000', 'Smart_Mail_Reminder::cron_hourly' ); // 1.jan 2014 12:00
 	}
 
 	/**
@@ -75,6 +75,7 @@ class Smart_Mail_Reminder {
 
 		register_setting( 'reminder-settings-group', 'reminder_admin_receive_bool' );
 		register_setting( 'reminder-settings-group', 'reminder_admin_email' );
+//		register_setting( 'reminder-settings-group', 'reminder_send_time' );
 	}
 
 	/**
@@ -105,14 +106,18 @@ class Smart_Mail_Reminder {
 				'title'      => 'Reminder to author(s)',
 				'fields'     => array(
 					array(
-						'key'            => 'field_542e86f726296',
-						'label'          => 'Påminnelsedato',
-						'name'           => 'reminder_date',
-						'type'           => 'date_picker',
-						'required'       => 1,
-						'date_format'    => 'yymmdd',
-						'display_format' => 'dd/mm/yy',
-						'first_day'      => 1,
+						'key'               => 'field_5433b1afd280d',
+						'label'             => 'Påminnelsedato',
+						'name'              => 'reminder_datetime',
+						'type'              => 'date_time_picker',
+						'required'          => 1,
+						'show_date'         => 'true',
+						'date_format'       => 'd/m/y',
+						'time_format'       => 'HH:mm',
+						'show_week_number'  => 'false',
+						'picker'            => 'select',
+						'save_as_timestamp' => 'true',
+						'get_as_timestamp'  => 'false',
 					),
 					array(
 						'key'           => 'field_542e872f26297',
@@ -133,7 +138,7 @@ class Smart_Mail_Reminder {
 						'type'          => 'true_false',
 						'required'      => 1,
 						'message'       => 'Huk av for å gi skribent påminnelse',
-						'default_value' => 0,
+						'default_value' => 1,
 					),
 					array(
 						'key'          => 'field_54326012e38b1',
@@ -191,6 +196,7 @@ class Smart_Mail_Reminder {
 	 * @return void
 	 */
 	public function view_options() {
+		self::cron_hourly();
 		?>
 		<div class="wrap">
 			<h2><?php _e( 'Smart Mail Reminder' ) ?></h2>
@@ -211,10 +217,9 @@ class Smart_Mail_Reminder {
 							<label for="reminder_admin_receive_bool"><?php _e( 'Skal administrator få påminnelser?' ) ?></label>
 						</th>
 						<td>
-							<input type="checkbox" name="reminder_admin_receive_bool" id="reminder_admin_receive_bool" <?php
-							if ( !esc_attr( get_option( 'reminder_admin_receive_bool' ) ) ) {
-								echo "un";
-							} ?>checked />
+							<input type="checkbox" name="reminder_admin_receive_bool" id="reminder_admin_receive_bool"
+								<?php echo ( !esc_attr( get_option( 'reminder_admin_receive_bool' ) ) ) ? "unchecked" : "checked" ?>
+								/>
 
 						</td>
 					</tr>
@@ -233,6 +238,7 @@ class Smart_Mail_Reminder {
 	 * Set mail_sent meta to 0 for WP_Post
 	 *
 	 * @param int $post_id
+	 *
 	 * @return void
 	 */
 	public function reset_mail_sent_meta( $post_id ) {
@@ -244,6 +250,7 @@ class Smart_Mail_Reminder {
 	 *
 	 * @param int $post_id
 	 * @param int $value
+	 *
 	 * @return void
 	 */
 	private static function set_mail_sent_meta( $post_id, $value = 0 ) {
@@ -259,20 +266,29 @@ class Smart_Mail_Reminder {
 	}
 
 	/**
-	 * Cron routine to be run daily at 10:00 am
+	 * Cron routine to be run every hour
 	 *
 	 * @return void
 	 */
-	public static function cron_daily() {
+	public static function cron_hourly() {
+		$today = strtotime( date( "Ymd" ) );
+//		var_dump( strtotime( date( "Ymd" ) ) - 3600 );
 		$query_args = array(
 			'post_type'        => 'post',
 			'post_status'      => 'publish',
-			'meta_key'         => 'reminder_date',
-			'meta_value'       => date( "Ymd" ),
+			'meta_key'         => 'reminder_datetime',
+			'meta_query' => array(
+				array(
+					'key' => 'reminder_datetime',
+					'value' => $today - 7200, // give a two hour buffer
+					'compare' => '<='
+				)
+			),
 			'suppress_filters' => true
 		); // Get all posts with raminderdate set to today
 
 		$posts = get_posts( $query_args );
+		var_dump($posts);
 		foreach ( $posts as $post ) {
 			/* @var $post WP_Post */
 			$meta = get_post_meta( $post->ID );
@@ -307,7 +323,6 @@ class Smart_Mail_Reminder {
 				self::set_mail_sent_meta( $post->ID, 1 );
 			}
 		}
-
 	}
 
 	/**
