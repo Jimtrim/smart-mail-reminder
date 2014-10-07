@@ -88,6 +88,7 @@ class Smart_Mail_Reminder {
 			'smart-mail-reminder', array( $this, 'view_options' ) );
 	}
 
+	/* */
 	/**
 	 * Register used Advanced Custom Fields
 	 *
@@ -100,8 +101,7 @@ class Smart_Mail_Reminder {
 				/* @var $user WP_User */
 				$users[$user->get( "user_email" )] = $user->get( "user_nicename" );
 			}
-			$today = current_time("d/m/y 12:00");
-//			var_dump($users);
+			$today = current_time( "d/m/y 12:00" );
 			register_field_group( array(
 				'id'         => 'acf_reminder-to-authors',
 				'title'      => 'Reminder to author(s)',
@@ -148,14 +148,14 @@ class Smart_Mail_Reminder {
 						'name'         => 'reminder_recipients',
 						'type'         => 'repeater',
 						'instructions' => 'Testing adding of users',
-						'required'     => 1,
+						'required'     => 0,
 						'sub_fields'   => array(
 							array(
 								'key'           => 'field_54326031e38b2',
-								'label'         => 'User',
+								'label'         => __( 'Bruker' ),
 								'name'          => 'user',
 								'type'          => 'select',
-								'required'      => 1,
+								'required'      => 0,
 								'column_width'  => '',
 								'choices'       => $users,
 								'default_value' => '',
@@ -163,7 +163,7 @@ class Smart_Mail_Reminder {
 								'multiple'      => 0,
 							),
 						),
-						'row_min'      => 1,
+						'row_min'      => 0,
 						'row_limit'    => '',
 						'layout'       => 'table',
 						'button_label' => 'Legg til bruker',
@@ -260,8 +260,9 @@ class Smart_Mail_Reminder {
 			return;
 		}
 
-		if ( get_post_meta( $post_id, 'reminder_sent' ) ) {
-			update_post_meta( $post_id, 'reminder_sent', $value, get_post_meta( $post_id, 'reminder_sent' ) );
+		$old_val = get_post_meta( $post_id, 'reminder_sent' );
+		if ( $old_val ) {
+			update_post_meta( $post_id, 'reminder_sent', $value, $old_val[0] );
 		} else {
 			add_post_meta( $post_id, 'reminder_sent', $value );
 		}
@@ -273,22 +274,22 @@ class Smart_Mail_Reminder {
 	 * @return void
 	 */
 	public static function cron_hourly() {
-		$today = current_time('timestamp');
+		$today = current_time( 'timestamp' );
 
 		$query_args = array(
 			'post_type'        => 'post',
 			'post_status'      => 'publish',
-			'meta_query' => array(
+			'meta_query'       => array(
 				array(
-					'key' => 'reminder_datetime',
+					'key'     => 'reminder_datetime',
 					'compare' => '<=',
-					'value' => $today,
-					'type' => 'numeric'
+					'value'   => $today,
+					'type'    => 'numeric'
 				),
 				array(
-					'key' => 'reminder_sent',
+					'key'     => 'reminder_sent',
 					'compare' => '=',
-					'value' => '0'
+					'value'   => '0'
 				)
 			),
 			'suppress_filters' => true
@@ -296,44 +297,47 @@ class Smart_Mail_Reminder {
 
 		$posts = get_posts( $query_args );
 
-		self::send_reminder_for_posts($posts);
+		self::send_reminder_for_posts( $posts );
 
 
 	}
 
-	private static function send_reminder_for_posts($posts) {
+	/**
+	 * Send mail to all preset recipients for given WP_Post array
+	 *
+	 * @param WP_Post[] $posts
+	 */
+	private static function send_reminder_for_posts( $posts ) {
+
 		foreach ( $posts as $post ) {
-			/* @var $post WP_Post */
 			$meta = get_post_meta( $post->ID );
 
 			if ( $meta["reminder_sent"] && $meta["reminder_sent"] == "1" ) {
 				continue;
 			} //filter all that have been sent today
 
-			$recipients    = array();
-			$reminder_date = $meta['reminder_date'][0];
-			if ( $reminder_date && $reminder_date === date( "Ymd" ) ) {
-				$subject = "[" . get_option( "blogname" ) . "] " . __( "Automatisk varsel" );
-				$message = $meta["reminder_text"][0];
-				$footer  = __( "Artikkel: " ) . get_permalink( $post->ID );
+			$recipients = array();
+
+			$subject = "[" . get_option( "blogname" ) . "] " . __( "Automatisk varsel" );
+			$message = $meta["reminder_text"][0];
+			$footer  = __( "Artikkel: " ) . get_permalink( $post->ID );
 
 
-				if ( $meta["reminder_author_bool"][0] == "1" ) {
-					$recipients[] = get_the_author_meta( 'user_email', $post->post_author );
-				}
-				if ( get_option( "reminder_admin_receive_bool" ) ) {
-					$recipients[] = get_option( "reminder_admin_email" );
-				}
-
-				for ( $i = 0; $i < intval( get_post_meta( $post->ID, "reminder_recipients" )[0], 10 ); $i ++ ) {
-					$recipients[] = get_post_meta( $post->ID, "reminder_recipients_" . $i . "_user" )[0];
-				}
-
-				foreach ( self::remove_duplicates( $recipients ) as $recipient ) {
-					wp_mail( $recipient, $subject . $footer, $message );
-				}
-				self::set_mail_sent_meta( $post->ID, 1 );
+			if ( $meta["reminder_author_bool"][0] == "1" ) {
+				$recipients[] = get_the_author_meta( 'user_email', $post->post_author );
 			}
+			if ( get_option( "reminder_admin_receive_bool" ) ) {
+				$recipients[] = get_option( "reminder_admin_email" );
+			}
+
+			for ( $i = 0; $i < intval( get_post_meta( $post->ID, "reminder_recipients" )[0], 10 ); $i ++ ) {
+				$recipients[] = get_post_meta( $post->ID, "reminder_recipients_" . $i . "_user" )[0];
+			}
+
+			foreach ( self::remove_duplicates( $recipients ) as $recipient ) {
+				wp_mail( $recipient, $subject . $footer, $message );
+			}
+			self::set_mail_sent_meta( $post->ID, 1 );
 		}
 	}
 
