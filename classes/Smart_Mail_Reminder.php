@@ -340,8 +340,8 @@ class Smart_Mail_Reminder {
 			$recipients[] = get_option( "reminder_admin_email" );
 		}
 
-		for ( $i = 0; $i < intval( get_post_meta( $post->ID, "reminder_recipients" )[0], 10 ); $i ++ ) {
-			$recipients[] = get_post_meta( $post->ID, "reminder_recipients_" . $i . "_user" )[0];
+		for ( $i = 0; $i < intval( $meta["reminder_recipients"][0], 10 ); $i ++ ) {
+			$recipients[] = $meta["reminder_recipients_" . $i . "_user"][0];
 		}
 
 		foreach ( self::remove_duplicates( $recipients ) as $recipient ) {
