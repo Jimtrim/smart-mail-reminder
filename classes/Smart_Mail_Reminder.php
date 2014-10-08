@@ -108,45 +108,45 @@ class Smart_Mail_Reminder {
 				'fields'     => array(
 					array(
 						'key'               => 'field_5433b1afd280d',
-						'label'             => 'Påminnelsedato',
+						'label'             => __('Påminnelsedato'),
 						'name'              => 'reminder_datetime',
 						'type'              => 'date_time_picker',
 						'required'          => 1,
 						'show_date'         => 'true',
-						'date_format'       => 'd/m/yy',
+						'date_format'       => 'yy/m/d',
 						'time_format'       => 'HH:mm',
 						'show_week_number'  => 'false',
 						'picker'            => 'select',
-						'save_as_timestamp' => 'false',
+						'save_as_timestamp' => 'true',
 						'get_as_timestamp'  => 'false',
 					),
 					array(
 						'key'           => 'field_542e872f26297',
-						'label'         => 'Påminnelsetekst',
+						'label'         => __('Påminnelsetekst'),
 						'name'          => 'reminder_text',
 						'type'          => 'textarea',
-						'required'      => 1,
-						'default_value' => 'Dette er en automatisk varsling om et innlegg på distriktssenteret.no.',
-						'placeholder'   => '',
+						'required'      => 0,
+						'default_value' => '',
+						'placeholder'   => __('Ekstra informasjon som skal være med i varselet'),
 						'maxlength'     => '',
 						'rows'          => '',
 						'formatting'    => 'br',
 					),
 					array(
 						'key'           => 'field_542e88cd26298',
-						'label'         => 'Send til skribent',
+						'label'         => __('Send til skribent'),
 						'name'          => 'reminder_author_bool',
 						'type'          => 'true_false',
 						'required'      => 0,
-						'message'       => 'Huk av for å gi skribent påminnelse',
+						'message'       => __('Huk av for å gi skribent påminnelse'),
 						'default_value' => 1,
 					),
 					array(
 						'key'          => 'field_54326012e38b1',
-						'label'        => 'Ekstra mottakere',
+						'label'        => __('Flere mottakere'),
 						'name'         => 'reminder_recipients',
 						'type'         => 'repeater',
-						'instructions' => 'Testing adding of users',
+						'instructions' => __('Legg til flere mottakere'),
 						'required'     => 0,
 						'sub_fields'   => array(
 							array(
@@ -165,7 +165,7 @@ class Smart_Mail_Reminder {
 						'row_min'      => 0,
 						'row_limit'    => '',
 						'layout'       => 'table',
-						'button_label' => 'Legg til bruker',
+						'button_label' => __('Legg til bruker'),
 					),
 				),
 				'location'   => array(
@@ -296,6 +296,7 @@ class Smart_Mail_Reminder {
 		); // Get all posts with raminderdate set to today
 
 		$posts = get_posts( $query_args );
+
 
 		self::send_reminder_for_posts( $posts );
 
