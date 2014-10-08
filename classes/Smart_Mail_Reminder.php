@@ -358,7 +358,7 @@ class Smart_Mail_Reminder {
 	 *
 	 * @return array
 	 */
-	private function remove_duplicates( $arr1 ) {
+	public function remove_duplicates( $arr1 ) {
 		$arr2 = array();
 		foreach ( $arr1 as $item ) {
 			if ( !in_array( $item, $arr2 ) ) {
