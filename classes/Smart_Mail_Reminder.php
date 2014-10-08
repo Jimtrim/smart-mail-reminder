@@ -293,10 +293,10 @@ class Smart_Mail_Reminder {
 				)
 			),
 			'suppress_filters' => true
-		); // Get all posts with raminderdate set to today
+		); // Get all posts with reminderdatetime set to a time before now that has not been sent yet
 
+		/* @var WP_Post[] $post */
 		$posts = get_posts( $query_args );
-
 
 		foreach ( $posts as $post ) {
 			self::send_reminder_for_post( $post );
@@ -322,8 +322,8 @@ class Smart_Mail_Reminder {
 		$recipients = array();
 
 		$subject = "[" . get_option( "blogname" ) . "] " . __( "Automatisk varsel" );
-		$message = $meta["reminder_text"][0];
-		$footer  = __( "Dette er en automatisk varsling om innlegget: " ) . get_permalink( $post->ID ) . '.\r\n';
+		$message = ($meta["reminder_text"]) ? $meta["reminder_text"][0] : "";
+		$footer  = __( "Dette er en automatisk varsling om innlegget: " ) . get_permalink( $post->ID ) . " \r\n";
 		$footer .= sprintf(__('Innlegget er opprinnelig publisert %1$s og sist oppdatert %2$s')
 			, $post->post_date
 			, $post->post_modified
