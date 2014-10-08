@@ -18,5 +18,9 @@ class Smart_Mail_Reminder_Test extends WP_UnitTestCase {
 
 		$this->assertTrue($expected === $real);
 	}
+
+	function test_wordpress_functionality() {
+		$this->assertTrue( get_bloginfo( 'version' ) != null );
+	}
 }
 
