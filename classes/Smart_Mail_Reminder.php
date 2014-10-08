@@ -298,7 +298,9 @@ class Smart_Mail_Reminder {
 		$posts = get_posts( $query_args );
 
 
-		self::send_reminder_for_posts( $posts );
+		foreach ( $posts as $post ) {
+			self::send_reminder_for_post( $post );
+		}
 
 
 	}
@@ -306,47 +308,47 @@ class Smart_Mail_Reminder {
 	/**
 	 * Send mail to all preset recipients for given WP_Post array
 	 *
-	 * @param WP_Post[] $posts
+	 * @param WP_Post $post
 	 */
-	private static function send_reminder_for_posts( $posts ) {
-
-		foreach ( $posts as $post ) {
-			$meta = get_post_meta( $post->ID );
-
-			if ( $meta["reminder_sent"] && $meta["reminder_sent"] == "1" ) {
-				continue;
-			} //filter all that have been sent today
-
-			$recipients = array();
-
-			$subject = "[" . get_option( "blogname" ) . "] " . __( "Automatisk varsel" );
-			$message = $meta["reminder_text"][0];
-			$footer  = __( "Dette er en automatisk varsling om innlegget: " ) . get_permalink( $post->ID ) . '.\r\n';
-			$footer .= sprintf(__('Innlegget er opprinnelig publisert %1$s og sist oppdatert %2$s')
-				, $post->post_date
-				, $post->post_modified
-			);
-
-			$message = $message . "\n" . $footer;
+	private static function send_reminder_for_post( $post ) {
 
 
+		$meta = get_post_meta( $post->ID );
 
-			if ( $meta["reminder_author_bool"][0] == "1" ) {
-				$recipients[] = get_the_author_meta( 'user_email', $post->post_author );
-			}
-			if ( get_option( "reminder_admin_receive_bool" ) ) {
-				$recipients[] = get_option( "reminder_admin_email" );
-			}
+		if ( $meta["reminder_sent"] && $meta["reminder_sent"] == "1" ) {
+			return;
+		} //filter all that have been sent today
 
-			for ( $i = 0; $i < intval( get_post_meta( $post->ID, "reminder_recipients" )[0], 10 ); $i ++ ) {
-				$recipients[] = get_post_meta( $post->ID, "reminder_recipients_" . $i . "_user" )[0];
-			}
+		$recipients = array();
 
-			foreach ( self::remove_duplicates( $recipients ) as $recipient ) {
-				wp_mail( $recipient, $subject, $message );
-			}
-			self::set_mail_sent_meta( $post->ID, 1 );
+		$subject = "[" . get_option( "blogname" ) . "] " . __( "Automatisk varsel" );
+		$message = $meta["reminder_text"][0];
+		$footer  = __( "Dette er en automatisk varsling om innlegget: " ) . get_permalink( $post->ID ) . '.\r\n';
+		$footer .= sprintf(__('Innlegget er opprinnelig publisert %1$s og sist oppdatert %2$s')
+			, $post->post_date
+			, $post->post_modified
+		);
+
+		$message = $message . "\n" . $footer;
+
+
+
+		if ( $meta["reminder_author_bool"][0] == "1" ) {
+			$recipients[] = get_the_author_meta( 'user_email', $post->post_author );
 		}
+		if ( get_option( "reminder_admin_receive_bool" ) ) {
+			$recipients[] = get_option( "reminder_admin_email" );
+		}
+
+		for ( $i = 0; $i < intval( get_post_meta( $post->ID, "reminder_recipients" )[0], 10 ); $i ++ ) {
+			$recipients[] = get_post_meta( $post->ID, "reminder_recipients_" . $i . "_user" )[0];
+		}
+
+		foreach ( self::remove_duplicates( $recipients ) as $recipient ) {
+			wp_mail( $recipient, $subject, $message );
+		}
+		self::set_mail_sent_meta( $post->ID, 1 );
+
 	}
 
 	/**
