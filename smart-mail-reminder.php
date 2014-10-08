@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name: Smart Mail Reminder
+ * Version: 1.0
  * Description: Send reminders to users about posts nearing expiration
- * Plugin URI: http://www.smartmedia.no
  * Author: Smart Media
  * Author URI: http://www.smartmedia.no
- * Version: 1.0
- * Text Domain: Text Domain
- * Domain Path: Domain Path
+ * Plugin URI: http://www.smartmedia.no
+ * Text Domain: smart-mail-reminder
+ * Domain Path: /
  * Dependencies: Advanced Custom Field, ACF Repeater
  */
 
